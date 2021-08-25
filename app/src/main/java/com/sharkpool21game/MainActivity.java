@@ -2,13 +2,13 @@ package com.sharkpool21game;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
 import com.sharkpool21game.utils.Constants;
-import com.sharkpool21game.utils.I18n;
 import com.sharkpool21game.utils.SharedValues;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -25,9 +25,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void init() {
-
         String lan = SharedValues.getString(getApplicationContext(), Constants.KEY_LANGUAGE, Constants.LAN_ENG);
-        I18n.loadLanguage(this, lan);
 
         play = findViewById(R.id.play);
         play.setOnClickListener(this);
@@ -55,7 +53,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void onPlay() {
-
+        Intent myIntent = new Intent(MainActivity.this, Game.class);
+        MainActivity.this.startActivity(myIntent);
     }
 
     private void onSettings() {
@@ -66,11 +65,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void onReview() {
         Review review = new Review();
         review.show(getSupportFragmentManager(), "Review-Dialog");
-    }
-
-    private void setButtonsClickable(boolean clickable) {
-        play.setClickable(clickable);
-        settings.setClickable(clickable);
-        review.setClickable(clickable);
     }
 }
