@@ -59,13 +59,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void onSettings() {
-
         Settings settingsFrag = new Settings();
         settingsFrag.show(getSupportFragmentManager(), "Setting-Dialog");
     }
 
     private void onReview() {
-
+        Review review = new Review();
+        review.show(getSupportFragmentManager(), "Review-Dialog");
     }
 
     private void setButtonsClickable(boolean clickable) {
