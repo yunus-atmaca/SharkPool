@@ -17,11 +17,15 @@ public class Ball extends AppCompatImageView implements Animator.AnimatorListene
 
     private ObjectAnimator animation;
     private Float xPos;
-
+    private onBallListener listener;
     public Ball(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         xPos = 0F;
         animation = null;
+    }
+
+    public void setListener(onBallListener listener){
+        this.listener = listener;
     }
 
     public void start() {
@@ -70,5 +74,10 @@ public class Ball extends AppCompatImageView implements Animator.AnimatorListene
     @Override
     public void onAnimationUpdate(ValueAnimator valueAnimator) {
         xPos = (Float) animation.getAnimatedValue();
+        this.listener.onMove(xPos);
+    }
+
+    public interface onBallListener {
+        void onMove(Float pos);
     }
 }

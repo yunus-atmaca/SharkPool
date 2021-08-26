@@ -52,7 +52,20 @@
             android:id="@+id/middle"
             android:layout_toEndOf="@id/path_2"
             android:orientation="vertical"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:text="0"
+                android:id="@+id/topScore"
+                android:textStyle="bold"
+                android:layout_gravity="center"
+                android:layout_marginTop="56dp"
+                android:background="@drawable/ic_top_score"
+                />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="56dp"

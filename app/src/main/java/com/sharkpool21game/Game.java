@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.sharkpool21game.utils.Constants;
 import com.sharkpool21game.utils.ControllerTouchListener;
@@ -19,7 +20,7 @@ import com.sharkpool21game.utils.SharedValues;
 
 import java.util.Random;
 
-public class Game extends AppCompatActivity implements Shark.SharkListener, View.OnClickListener, ControllerTouchListener.OnTouchListener {
+public class Game extends AppCompatActivity implements Shark.SharkListener, View.OnClickListener, ControllerTouchListener.OnTouchListener, Ball.onBallListener {
 
     private final int leftAndRightSideWidth = 44;
     private final int middleWidth = 30;
@@ -30,13 +31,20 @@ public class Game extends AppCompatActivity implements Shark.SharkListener, View
     private String lan;
     private String controller;
     private SPManager spManager;
-    private int translationY;
     private int sharkId;
+
+    private int screenWidth;
+    private int screenHeight;
+
+    private boolean settingNewBall;
+    private int currentBallIndex;
+    private boolean isMoving;
 
     private LinearLayout leftSide, middle, rightSide, path1, path2, path3, path4;
     private RelativeLayout rootView;
     private Ball ball1, ball2, ball3, ball4, ball5;
-
+    private Ball currentBall;
+    private TextView topScore;
 
     private int maxDelayForSpawn = 1000;
     private int maxPlusDelayForSpawn = 300;
@@ -58,28 +66,41 @@ public class Game extends AppCompatActivity implements Shark.SharkListener, View
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        int width = displayMetrics.widthPixels;
-        translationY = displayMetrics.heightPixels;
-        pathWidth = (width - (2 * getMappedSize(leftAndRightSideWidth) + 6 * getMappedSize(separatorWidth) + getMappedSize(middleWidth))) / 4;
+        screenWidth = displayMetrics.widthPixels;
+        screenHeight = displayMetrics.heightPixels;
+        pathWidth = (screenWidth - (2 * getMappedSize(leftAndRightSideWidth) + 6 * getMappedSize(separatorWidth) + getMappedSize(middleWidth))) / 4;
+
+        settingNewBall = false;
+        currentBallIndex = 1;
+        isMoving = false;
 
         rootView = findViewById(R.id.rootView);
-        if(controller.equals("1")){
+        if (controller.equals("1")) {
             rootView.setOnClickListener(this);
-        }else{
+        } else {
             rootView.setOnTouchListener(new ControllerTouchListener(this, this));
         }
 
         sharkId = 3000;
 
         ball1 = findViewById(R.id.ball1);
+        ball1.setListener(this);
         ball2 = findViewById(R.id.ball2);
+        ball2.setListener(this);
         ball3 = findViewById(R.id.ball3);
+        ball3.setListener(this);
         ball4 = findViewById(R.id.ball4);
+        ball4.setListener(this);
         ball5 = findViewById(R.id.ball5);
+        ball5.setListener(this);
+
+        currentBall = ball1;
+
+        topScore = findViewById(R.id.topScore);
 
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
-            getMappedSize(leftAndRightSideWidth - 2),
-            RelativeLayout.LayoutParams.MATCH_PARENT
+                getMappedSize(leftAndRightSideWidth - 2),
+                RelativeLayout.LayoutParams.MATCH_PARENT
         );
 
         leftSide = findViewById(R.id.leftSide);
@@ -139,45 +160,6 @@ public class Game extends AppCompatActivity implements Shark.SharkListener, View
         params.addRule(RelativeLayout.END_OF, R.id.path_4);
         rightSide.setLayoutParams(params);
 
-
-        /*leftSide = findViewById(R.id.leftSide);
-        ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) leftSide.getLayoutParams();
-        marginLayoutParams.width = getMappedSize(leftAndRightSideWidth - 2);
-        leftSide.setLayoutParams(marginLayoutParams);
-
-        rightSide = findViewById(R.id.rightSide);
-        marginLayoutParams = (ViewGroup.MarginLayoutParams) rightSide.getLayoutParams();
-        marginLayoutParams.width = getMappedSize(leftAndRightSideWidth);
-        marginLayoutParams.leftMargin = getMappedSize(separatorWidth + 2);
-        rightSide.setLayoutParams(marginLayoutParams);
-
-        middle = findViewById(R.id.middle);
-        marginLayoutParams = (ViewGroup.MarginLayoutParams) middle.getLayoutParams();
-        marginLayoutParams.width = getMappedSize(middleWidth);
-        marginLayoutParams.leftMargin = getMappedSize(separatorWidth);
-        middle.setLayoutParams(marginLayoutParams);
-
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        int width = displayMetrics.widthPixels;
-        translationY = displayMetrics.heightPixels;
-
-        pathWidth = (width - (2 * getMappedSize(leftAndRightSideWidth) + 6 * getMappedSize(separatorWidth) + getMappedSize(30))) / 4;
-
-        path1 = findViewById(R.id.path_1);
-        marginLayoutParams = (ViewGroup.MarginLayoutParams) path1.getLayoutParams();
-        marginLayoutParams.width = pathWidth;
-        path1.setLayoutParams(marginLayoutParams);
-
-        path2 = findViewById(R.id.path_2);
-        path2.setLayoutParams(marginLayoutParams);
-
-        path3 = findViewById(R.id.path_3);
-        path3.setLayoutParams(marginLayoutParams);
-
-        path4 = findViewById(R.id.path_4);
-        path4.setLayoutParams(marginLayoutParams);*/
-
         //onStartGame();
     }
 
@@ -189,7 +171,7 @@ public class Game extends AppCompatActivity implements Shark.SharkListener, View
                 createShark();
                 interval.postDelayed(this, new Random().nextInt(waveDelay) + wavePlusDelay);
             }
-        }, new Random().nextInt(waveDelay) + wavePlusDelay );
+        }, new Random().nextInt(waveDelay) + wavePlusDelay);
     }
 
     private void createShark() {
@@ -197,7 +179,7 @@ public class Game extends AppCompatActivity implements Shark.SharkListener, View
 
         for (int i = 0; i < numberOfSpawn; ++i) {
             int pathIndex = new Random().nextInt(5) + 1;
-            Shark shark = new Shark(this, translationY, sharkId, this, pathIndex);
+            Shark shark = new Shark(this, screenHeight, sharkId, this, pathIndex);
 
             new Handler().postDelayed(() -> {
                 if (pathIndex == 1) {
@@ -216,11 +198,7 @@ public class Game extends AppCompatActivity implements Shark.SharkListener, View
     }
 
     private int getMappedSize(int defSize) {
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        int width = displayMetrics.widthPixels;
-
-        return width * defSize / defaultScreenWidth;
+        return screenWidth * defSize / defaultScreenWidth;
     }
 
     @Override
@@ -237,7 +215,7 @@ public class Game extends AppCompatActivity implements Shark.SharkListener, View
 
     @Override
     public void onAnimEnd(int id, Shark shark, int parent) {
-        try{
+        try {
             if (parent == 1) {
                 path1.removeView(shark);
             } else if (parent == 2) {
@@ -248,27 +226,76 @@ public class Game extends AppCompatActivity implements Shark.SharkListener, View
                 path4.removeView(shark);
             }
             //Log.d("Game-123", "onAnimEnd-Removed");
-        }catch (Exception e){
+        } catch (Exception e) {
             //Ignore
         }
     }
 
     @Override
     public void onClick(View view) {
-        if(view.getId() == R.id.rootView){
-            Log.d("Game-Test", "Click-RootView");
+        if (view.getId() == R.id.rootView) {
+            //Log.d("Game-Test", "Click-RootView");
+            if(settingNewBall || currentBall == null)
+                return;
+
+            if(isMoving){
+                isMoving = false;
+                currentBall.stop();
+            }else{
+                isMoving = true;
+                currentBall.start();
+            }
         }
     }
 
     @Override
     public void onUp() {
         //Log.d("Game-Test", "Click-onUp");
-        ball1.stop();
+        if(settingNewBall || currentBall == null)
+            return;
+
+        currentBall.stop();
     }
 
     @Override
     public void onLongPress() {
         //Log.d("Game-Test", "Click-onLongPress");
-        ball1.start();
+        if(settingNewBall || currentBall == null)
+            return;
+
+        currentBall.start();
+    }
+
+    @Override
+    public void onMove(Float pos) {
+        if(settingNewBall || currentBall == null)
+            return;
+
+        if (pos >= (screenWidth - getMappedSize(leftAndRightSideWidth + 10))) {
+            settingNewBall = true;
+            Log.d("DONE-", "DONE: " + pos);
+            currentBall.stop();
+
+            if(currentBallIndex == 1){
+                currentBall = ball2;
+                ++currentBallIndex;
+            }else if (currentBallIndex == 2){
+                currentBall = ball3;
+                ++currentBallIndex;
+            }else if (currentBallIndex == 3){
+                currentBall = ball4;
+                ++currentBallIndex;
+            }else if (currentBallIndex == 4){
+                currentBall = ball5;
+                ++currentBallIndex;
+            }else if (currentBallIndex == 5){
+                currentBall = null;
+            }
+
+            CharSequence score = topScore.getText();
+            topScore.setText(String.valueOf(Integer.parseInt(String.valueOf(score)) + 1));
+
+            settingNewBall = false;
+        }
     }
 }
