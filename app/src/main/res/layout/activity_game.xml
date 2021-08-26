@@ -1,69 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/pool"
     tools:context=".Game">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:orientation="horizontal"
+    <RelativeLayout
         android:id="@+id/sidesContainer"
-        android:layout_height="match_parent">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
 
-        <View
-            android:layout_width="44dp"
-            android:background="#0F2344"
+
+        <LinearLayout
             android:id="@+id/leftSide"
-            android:layout_height="match_parent"/>
+            android:layout_width="44dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:background="#0F2344"
+            android:gravity="center"
+            android:orientation="vertical">
 
-        <View
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="56dp"
             android:background="@android:color/transparent"
             android:id="@+id/path_1"
+            android:orientation="vertical"
             android:layout_marginStart="3dp"
-            android:layout_height="match_parent"/>
+            android:layout_toEndOf="@id/leftSide"
+            android:layout_height="match_parent">
 
-        <View
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="56dp"
             android:background="@android:color/transparent"
             android:id="@+id/path_2"
+            android:layout_toEndOf="@id/path_1"
+            android:orientation="vertical"
             android:layout_marginStart="3dp"
             android:layout_height="match_parent"/>
 
-        <View
+        <LinearLayout
             android:layout_width="30dp"
             android:background="#0F2344"
             android:id="@+id/middle"
+            android:layout_toEndOf="@id/path_2"
+            android:orientation="vertical"
             android:layout_height="match_parent"/>
 
-        <View
+        <LinearLayout
             android:layout_width="56dp"
             android:background="@android:color/transparent"
             android:id="@+id/path_3"
+            android:layout_toEndOf="@id/middle"
             android:layout_marginStart="3dp"
+            android:orientation="vertical"
             android:layout_height="match_parent"/>
 
-        <View
+        <LinearLayout
             android:layout_width="56dp"
             android:background="@android:color/transparent"
             android:id="@+id/path_4"
             android:layout_marginStart="3dp"
+            android:layout_toEndOf="@id/path_3"
+            android:orientation="vertical"
             android:layout_height="match_parent"/>
 
-        <View
+        <LinearLayout
             android:layout_width="44dp"
             android:background="#0F2344"
             android:id="@+id/rightSide"
+            android:layout_toEndOf="@id/path_4"
+            android:orientation="vertical"
             android:layout_height="match_parent"/>
 
-    </LinearLayout>
-    <com.sharkpool21game.Shark
+    </RelativeLayout>
+
+
+    <com.sharkpool21game.Ball
+        android:id="@+id/ball1"
+        android:layout_marginStart="12dp"
         android:layout_width="wrap_content"
-        android:src="@drawable/ic_shark_left"
-        android:layout_marginStart="44dp"
-        android:layout_height="wrap_content"/>
+        android:layout_marginVertical="16dp"
+        android:layout_above="@id/ball2"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_ball" />
+
+    <com.sharkpool21game.Ball
+        android:id="@+id/ball2"
+        android:layout_marginStart="12dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="16dp"
+        android:layout_above="@id/ball3"
+        android:src="@drawable/ic_ball" />
+
+    <com.sharkpool21game.Ball
+        android:id="@+id/ball3"
+        android:layout_marginStart="12dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginVertical="16dp"
+        android:src="@drawable/ic_ball" />
+
+    <com.sharkpool21game.Ball
+        android:id="@+id/ball4"
+        android:layout_marginStart="12dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_below="@id/ball3"
+        android:layout_marginVertical="16dp"
+        android:src="@drawable/ic_ball" />
+
+    <com.sharkpool21game.Ball
+        android:id="@+id/ball5"
+        android:layout_marginStart="12dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_below="@id/ball4"
+        android:layout_marginVertical="16dp"
+        android:src="@drawable/ic_ball" />
 </RelativeLayout>
