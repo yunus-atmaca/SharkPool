@@ -8,6 +8,7 @@ public class Constants {
     public static final String KEY_SOUND = "Sound";
     public static final String KEY_CONTROL = "Control";
     public static final String KEY_LANGUAGE = "Language";
+    public static final String KEY_SCORE = "BestScore";
 
     public static final String KEY_BEST_SCORE = "key_best_score";
 

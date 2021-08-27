@@ -50,10 +50,11 @@ public class Game extends AppCompatActivity implements
 
     private LinearLayout leftSide, middle, rightSide, path1, path2, path3, path4;
     private RelativeLayout rootView;
+    private RelativeLayout rootGameOverView;
     private Ball ball1, ball2, ball3, ball4, ball5;
     private ViewGroup.LayoutParams[] ballsParams = new ViewGroup.LayoutParams[5];
     private Ball currentBall;
-    private TextView topScore;
+    private TextView topScore, userScore, bestScore;
 
     private int maxDelayForSpawn = 1000;
     private int maxPlusDelayForSpawn = 300;
@@ -70,6 +71,7 @@ public class Game extends AppCompatActivity implements
     }
 
     private void init() {
+        spManager = SPManager.instance(getApplicationContext());
         lan = SharedValues.getString(getApplicationContext(), Constants.KEY_LANGUAGE, Constants.LAN_ENG);
         controller = SharedValues.getString(getApplicationContext(), Constants.KEY_CONTROL, "1");
 
@@ -91,6 +93,12 @@ public class Game extends AppCompatActivity implements
         } else {
             rootView.setOnTouchListener(new ControllerTouchListener(this, this));
         }
+
+        rootGameOverView = findViewById(R.id.rootGameOver);
+        userScore = findViewById(R.id.userScore);
+        bestScore = findViewById(R.id.bestScore);
+        findViewById(R.id.home).setOnClickListener(this);
+        findViewById(R.id.restart).setOnClickListener(this);
 
         sharkId = 3000;
 
@@ -184,20 +192,20 @@ public class Game extends AppCompatActivity implements
     }
 
     private void onStartGame() {
-        /*final Handler interval = new Handler();
+        final Handler interval = new Handler();
         interval.postDelayed(new Runnable() {
             @Override
             public void run() {
                 createShark();
                 interval.postDelayed(this, new Random().nextInt(waveDelay) + wavePlusDelay);
             }
-        }, new Random().nextInt(waveDelay) + wavePlusDelay);*/
+        }, new Random().nextInt(waveDelay) + wavePlusDelay);
 
-        createShark();
+        //createShark();
     }
 
     private void createShark() {
-        /*int numberOfSpawn = new Random().nextInt(5) + 1;
+        int numberOfSpawn = new Random().nextInt(5) + 1;
 
         for (int i = 0; i < numberOfSpawn; ++i) {
             int pathIndex = new Random().nextInt(5) + 1;
@@ -216,12 +224,12 @@ public class Game extends AppCompatActivity implements
                 shark.startAnim();
 
             }, new Random().nextInt(maxDelayForSpawn) + maxPlusDelayForSpawn);
-        }*/
+        }
 
-        Shark shark = new Shark(this, screenHeight, sharkId, this, 1);
+        /*Shark shark = new Shark(this, screenHeight, sharkId, this, 1);
         path1.addView(shark);
 
-        shark.startAnim();
+        shark.startAnim();*/
     }
 
     private int getMappedSize(int defSize) {
@@ -282,34 +290,39 @@ public class Game extends AppCompatActivity implements
             Log.d("onSharkMovement: ", "Catch----------------");
 
             isEating = true;
+            spManager.play(Constants.SHARK_ATE_THE_BALL);
             shark.eatBall(sharkX, sharkY);
 
             if (currentBallIndex == 1) {
                 ball1.stop();
-                rootView.removeView(ball1);
+                ball1.setVisibility(View.INVISIBLE);
                 currentBall = ball2;
                 ++currentBallIndex;
             } else if (currentBallIndex == 2) {
                 ball2.stop();
-                rootView.removeView(ball2);
+                ball2.setVisibility(View.INVISIBLE);
                 currentBall = ball3;
                 ++currentBallIndex;
             } else if (currentBallIndex == 3) {
                 ball3.stop();
-                rootView.removeView(ball3);
+                ball3.setVisibility(View.INVISIBLE);
                 currentBall = ball4;
                 ++currentBallIndex;
             } else if (currentBallIndex == 4) {
                 ball4.stop();
-                rootView.removeView(ball4);
+                ball4.setVisibility(View.INVISIBLE);
                 currentBall = ball5;
                 ++currentBallIndex;
             } else if (currentBallIndex == 5) {
                 ball5.stop();
-                rootView.removeView(ball5);
+                ball5.setVisibility(View.INVISIBLE);
                 currentBall = null;
                 if (numberOfSuccess >= 3) {
                     reCreateBalls();
+                } else {
+                    //Game over
+                    spManager.play(Constants.GAME_OVER);
+                    gameOver();
                 }
             }
         }
@@ -345,7 +358,29 @@ public class Game extends AppCompatActivity implements
                 isMoving = true;
                 currentBall.start();
             }
+        } else if (view.getId() == R.id.home) {
+
+        } else if (view.getId() == R.id.restart) {
+
         }
+    }
+
+    private String getScoreText() {
+        if (lan.equals(Constants.LAN_ENG)) {
+            return "Score: ";
+        } else if (lan.equals(Constants.LAN_RU)) {
+            return "Счет: ";
+        }
+        return "分数。";
+    }
+
+    private String getBestScoreText() {
+        if (lan.equals(Constants.LAN_ENG)) {
+            return "Best score: ";
+        } else if (lan.equals(Constants.LAN_RU)) {
+            return "Лучший счет: ";
+        }
+        return "最佳得分。";
     }
 
     @Override
@@ -473,6 +508,29 @@ public class Game extends AppCompatActivity implements
         currentBall = ball1;
     }
 
+    private void gameOver() {
+        removeAllSharks(path1);
+        removeAllSharks(path2);
+        removeAllSharks(path3);
+        removeAllSharks(path4);
+
+        int savedScore = SharedValues.getInt(getApplicationContext(), Constants.KEY_BEST_SCORE, 0);
+
+        rootGameOverView.setVisibility(View.VISIBLE);
+    }
+
+    private void removeAllSharks(LinearLayout path) {
+        int numberOfChild = path.getChildCount();
+        for (int i = 0; i < numberOfChild; ++i) {
+            try{
+                ((Shark) path.getChildAt(i)).stop();
+            }catch (Exception ignored){
+                //Ignore
+            }
+        }
+        path.removeAllViews();
+    }
+
     @Override
     public void onMove(Float pos) {
         if (settingNewBall || currentBall == null || isEating)
@@ -481,6 +539,7 @@ public class Game extends AppCompatActivity implements
         if (pos >= (screenWidth - getMappedSize(leftAndRightSideWidth + 10))) {
             settingNewBall = true;
             Log.d("DONE-", "DONE: " + pos);
+            spManager.play(Constants.TO_THE_SHORE);
             currentBall.stop();
 
             if (currentBallIndex == 1) {
@@ -505,6 +564,10 @@ public class Game extends AppCompatActivity implements
 
                 if (numberOfSuccess >= 3) {
                     reCreateBalls();
+                } else {
+                    //Game over
+                    spManager.play(Constants.GAME_OVER);
+                    gameOver();
                 }
             }
 

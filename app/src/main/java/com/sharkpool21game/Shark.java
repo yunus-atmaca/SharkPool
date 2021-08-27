@@ -64,6 +64,11 @@ public class Shark extends AppCompatImageView implements Animator.AnimatorListen
         },200);
     }
 
+    public void stop(){
+        if(animation != null)
+            animation.cancel();
+    }
+
     private void setAnim(){
         new CountDownTimer(20000, 500) {
             public void onTick(long millisUntilFinished) {
