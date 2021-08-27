@@ -18,6 +18,13 @@ public class Ball extends AppCompatImageView implements Animator.AnimatorListene
     private ObjectAnimator animation;
     private Float xPos;
     private onBallListener listener;
+
+    public Ball(@NonNull Context context){
+        super(context);
+        xPos = 0F;
+        animation = null;
+    }
+
     public Ball(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         xPos = 0F;
@@ -35,12 +42,12 @@ public class Ball extends AppCompatImageView implements Animator.AnimatorListene
         animation.setFloatValues(1500);
         animation.addListener(this);
         animation.setDuration(getDuration());
+        //animation.setDuration(5000);
         animation.addUpdateListener(this);
         animation.start();
     }
 
     private int getDuration() {
-        //Log.d("getDuration-2", "" + (Math.round(1500 - xPos) * 1000 / 1500));
         return (Math.round(1500 - xPos) * 1000) / 1500;
     }
 

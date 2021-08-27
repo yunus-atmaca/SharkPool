@@ -5,6 +5,7 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.os.CountDownTimer;
+import android.os.Handler;
 import android.util.Log;
 import android.widget.LinearLayout;
 
@@ -17,12 +18,18 @@ public class Shark extends AppCompatImageView implements Animator.AnimatorListen
     private int parentNumber;
 
     private SharkListener listener;
+    private boolean isEating;
+    private ObjectAnimator animation;
+    private Float yPos;
     public Shark(Context context, int translationY, int id, SharkListener listener, int parentNumber){
         super(context);
 
         this.listener = listener;
         this.translationY = translationY + 2*dpToPx(120);
         this.parentNumber = parentNumber;
+        isEating = false;
+        animation = null;
+        yPos = 0F;
 
         isLeft = true;
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -36,20 +43,33 @@ public class Shark extends AppCompatImageView implements Animator.AnimatorListen
         setLayoutParams(params);
     }
 
-    /*public Shark(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        isLeft = true;
-        setImageResource(R.drawable.ic_shark_left);
-        //init();
-    }*/
-
     public void startAnim(){
         setAnim();
     }
 
+    public void eatBall(float x, float y){
+        isEating = true;
+        if(animation != null)
+            animation.cancel();
+
+        setImageResource(R.drawable.ic_shark_attack);
+
+        new Handler().postDelayed(() -> {
+            setImageResource(R.drawable.ic_shark_left);
+            isLeft = true;
+
+            createViewsAndAnimations();
+            isEating = false;
+            this.listener.onEndEating();
+        },200);
+    }
+
     private void setAnim(){
-        new CountDownTimer(16000, 500) {
+        new CountDownTimer(20000, 500) {
             public void onTick(long millisUntilFinished) {
+                if(isEating)
+                    return;
+
                 setImageResource(isLeft ? R.drawable.ic_shark_right : R.drawable.ic_shark_left);
                 isLeft = !isLeft;
             }
@@ -63,11 +83,16 @@ public class Shark extends AppCompatImageView implements Animator.AnimatorListen
     }
 
     private void createViewsAndAnimations() {
-        ObjectAnimator animation = ObjectAnimator.ofFloat(this, "translationY", translationY);
+        animation = ObjectAnimator.ofFloat(this, "translationY", translationY);
         animation.addListener(this);
-        animation.setDuration(5000);
+        //animation.setDuration(5000);
+        animation.setDuration(getDuration());
         animation.addUpdateListener(this);
         animation.start();
+    }
+
+    private int getDuration() {
+        return (Math.round(translationY - yPos) * 5000) / translationY;
     }
 
     private int dpToPx(int dp) {
@@ -82,6 +107,12 @@ public class Shark extends AppCompatImageView implements Animator.AnimatorListen
 
     @Override
     public void onAnimationEnd(Animator animator) {
+        if(isEating)
+            return;
+        if(animation != null) {
+            animation.cancel();
+            animation = null;
+        }
         this.listener.onAnimEnd(getId(), this, parentNumber);
     }
 
@@ -97,10 +128,13 @@ public class Shark extends AppCompatImageView implements Animator.AnimatorListen
 
     @Override
     public void onAnimationUpdate(ValueAnimator valueAnimator) {
-
+        yPos = (Float) animation.getAnimatedValue();
+        listener.onSharkMovement(this);
     }
 
     public interface SharkListener {
         void onAnimEnd(int id, Shark shark, int parent);
+        void onSharkMovement(Shark shark);
+        void onEndEating();
     }
 }
