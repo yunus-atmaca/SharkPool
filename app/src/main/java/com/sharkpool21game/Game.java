@@ -46,13 +46,17 @@ public class Game extends AppCompatActivity implements
     private int currentBallIndex;
     private boolean isMoving;
     private boolean isEating;
+    private boolean isGameOver;
     private int numberOfSuccess;
+    private boolean isInitial;
+
+    private Handler interval;
+    private Runnable runnable;
 
     private LinearLayout leftSide, middle, rightSide, path1, path2, path3, path4;
     private RelativeLayout rootView;
     private RelativeLayout rootGameOverView;
     private Ball ball1, ball2, ball3, ball4, ball5;
-    private ViewGroup.LayoutParams[] ballsParams = new ViewGroup.LayoutParams[5];
     private Ball currentBall;
     private TextView topScore, userScore, bestScore;
 
@@ -61,6 +65,8 @@ public class Game extends AppCompatActivity implements
 
     private int waveDelay = 2000;
     private int wavePlusDelay = 600;
+
+    private int sharkSpeed = 5000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +91,8 @@ public class Game extends AppCompatActivity implements
         currentBallIndex = 1;
         isMoving = false;
         isEating = false;
+        isGameOver = false;
+        isInitial = true;
         numberOfSuccess = 0;
 
         rootView = findViewById(R.id.rootView);
@@ -104,23 +112,18 @@ public class Game extends AppCompatActivity implements
 
         ball1 = findViewById(R.id.ball1);
         ball1.setListener(this);
-        ballsParams[0] = ball1.getLayoutParams();
 
         ball2 = findViewById(R.id.ball2);
         ball2.setListener(this);
-        ballsParams[1] = ball2.getLayoutParams();
 
         ball3 = findViewById(R.id.ball3);
         ball3.setListener(this);
-        ballsParams[2] = ball3.getLayoutParams();
 
         ball4 = findViewById(R.id.ball4);
         ball4.setListener(this);
-        ballsParams[3] = ball4.getLayoutParams();
 
         ball5 = findViewById(R.id.ball5);
         ball5.setListener(this);
-        ballsParams[4] = ball5.getLayoutParams();
 
         currentBall = ball1;
 
@@ -192,24 +195,31 @@ public class Game extends AppCompatActivity implements
     }
 
     private void onStartGame() {
-        final Handler interval = new Handler();
-        interval.postDelayed(new Runnable() {
+        interval = new Handler();
+
+        runnable = new Runnable() {
             @Override
             public void run() {
+                isInitial = false;
+                if (isGameOver)
+                    return;
                 createShark();
                 interval.postDelayed(this, new Random().nextInt(waveDelay) + wavePlusDelay);
             }
-        }, new Random().nextInt(waveDelay) + wavePlusDelay);
+        };
 
-        //createShark();
+        interval.postDelayed(runnable, isInitial ? 0 : new Random().nextInt(waveDelay) + wavePlusDelay);
     }
 
     private void createShark() {
+        if (isGameOver)
+            return;
+
         int numberOfSpawn = new Random().nextInt(5) + 1;
 
         for (int i = 0; i < numberOfSpawn; ++i) {
             int pathIndex = new Random().nextInt(5) + 1;
-            Shark shark = new Shark(this, screenHeight, sharkId, this, pathIndex);
+            Shark shark = new Shark(this, screenHeight, sharkId, this, pathIndex, sharkSpeed);
 
             new Handler().postDelayed(() -> {
                 if (pathIndex == 1) {
@@ -285,8 +295,8 @@ public class Game extends AppCompatActivity implements
         if (ballX == 0 && sharkX == 0)
             return;
 
-        if ((sharkX - 30 <= ballX && sharkX + 30 >= ballX) &&
-                (ballY - 36 <= sharkY && ballY + 36 >= sharkY)) {
+        if ((sharkX - 44 <= ballX && sharkX + 44 >= ballX) &&
+                (ballY - 64 <= sharkY && ballY + 64 >= sharkY)) {
             Log.d("onSharkMovement: ", "Catch----------------");
 
             isEating = true;
@@ -318,6 +328,7 @@ public class Game extends AppCompatActivity implements
                 ball5.setVisibility(View.INVISIBLE);
                 currentBall = null;
                 if (numberOfSuccess >= 3) {
+                    changeSpeed();
                     reCreateBalls();
                 } else {
                     //Game over
@@ -359,9 +370,9 @@ public class Game extends AppCompatActivity implements
                 currentBall.start();
             }
         } else if (view.getId() == R.id.home) {
-
+            onBackPressed();
         } else if (view.getId() == R.id.restart) {
-
+            restart();
         }
     }
 
@@ -509,26 +520,84 @@ public class Game extends AppCompatActivity implements
     }
 
     private void gameOver() {
+        isGameOver = true;
+
+        interval.removeCallbacksAndMessages(null);
+        interval.removeCallbacks(runnable);
+
         removeAllSharks(path1);
         removeAllSharks(path2);
         removeAllSharks(path3);
         removeAllSharks(path4);
 
         int savedScore = SharedValues.getInt(getApplicationContext(), Constants.KEY_BEST_SCORE, 0);
+        int topUserScore = Integer.parseInt(topScore.getText().toString());
 
+        if (savedScore < topUserScore) {
+            SharedValues.setInt(getApplicationContext(), Constants.KEY_BEST_SCORE, topUserScore);
+            bestScore.setText(getBestScoreText() + ("" + topUserScore));
+        } else {
+            bestScore.setText(getBestScoreText() + ("" + savedScore));
+        }
+
+        userScore.setText(getScoreText() + ("" + topUserScore));
         rootGameOverView.setVisibility(View.VISIBLE);
+    }
+
+    private void restart() {
+        settingNewBall = false;
+        currentBallIndex = 1;
+        isMoving = false;
+        isEating = false;
+        isGameOver = false;
+        isInitial = true;
+        numberOfSuccess = 0;
+        topScore.setText("0");
+
+        maxDelayForSpawn = 1000;
+        maxPlusDelayForSpawn = 300;
+        waveDelay = 2000;
+        wavePlusDelay = 600;
+        sharkSpeed = 5000;
+
+        reCreateBalls();
+        rootGameOverView.setVisibility(View.GONE);
+
+        onStartGame();
     }
 
     private void removeAllSharks(LinearLayout path) {
         int numberOfChild = path.getChildCount();
         for (int i = 0; i < numberOfChild; ++i) {
-            try{
+            try {
                 ((Shark) path.getChildAt(i)).stop();
-            }catch (Exception ignored){
+            } catch (Exception ignored) {
                 //Ignore
             }
         }
         path.removeAllViews();
+    }
+
+    private void changeSpeed() {
+        if (maxDelayForSpawn > 500) {
+            maxDelayForSpawn = maxDelayForSpawn - 50;
+        }
+
+        if (maxPlusDelayForSpawn > 150) {
+            maxPlusDelayForSpawn = maxPlusDelayForSpawn - 25;
+        }
+
+        if (waveDelay > 1000) {
+            waveDelay = waveDelay - 100;
+        }
+
+        if (wavePlusDelay > 300) {
+            wavePlusDelay = wavePlusDelay - 50;
+        }
+
+        if (wavePlusDelay > 2500) {
+            sharkSpeed = sharkSpeed - 250;
+        }
     }
 
     @Override
@@ -563,6 +632,7 @@ public class Game extends AppCompatActivity implements
                 ++numberOfSuccess;
 
                 if (numberOfSuccess >= 3) {
+                    changeSpeed();
                     reCreateBalls();
                 } else {
                     //Game over

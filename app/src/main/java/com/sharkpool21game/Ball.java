@@ -48,7 +48,7 @@ public class Ball extends AppCompatImageView implements Animator.AnimatorListene
     }
 
     private int getDuration() {
-        return (Math.round(1500 - xPos) * 1000) / 1500;
+        return (Math.round(1500 - xPos) * 2000) / 1500;
     }
 
     public void stop() {

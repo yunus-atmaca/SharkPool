@@ -21,12 +21,14 @@ public class Shark extends AppCompatImageView implements Animator.AnimatorListen
     private boolean isEating;
     private ObjectAnimator animation;
     private Float yPos;
-    public Shark(Context context, int translationY, int id, SharkListener listener, int parentNumber){
+    private int speed;
+    public Shark(Context context, int translationY, int id, SharkListener listener, int parentNumber, int speed){
         super(context);
 
         this.listener = listener;
         this.translationY = translationY + 2*dpToPx(120);
         this.parentNumber = parentNumber;
+        this.speed = speed;
         isEating = false;
         animation = null;
         yPos = 0F;
@@ -97,7 +99,7 @@ public class Shark extends AppCompatImageView implements Animator.AnimatorListen
     }
 
     private int getDuration() {
-        return (Math.round(translationY - yPos) * 5000) / translationY;
+        return (Math.round(translationY - yPos) * this.speed) / translationY;
     }
 
     private int dpToPx(int dp) {
